@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+  <title>Arabic Learning Progress</title>
+  <!-- Firebase SDK v8 -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <h1>Arabic Learning Progress</h1>
+  <form id="progress-form">
+    <label for="date">Date:</label>
+    <input type="date" id="date" required>
+    <label for="speaking">Speaking practice (hours):</label>
+    <input type="range" id="speaking" min="1" max="5" required>
+    <label for="vocabulary">Vocabulary practice (hours):</label>
+    <input type="range" id="vocabulary" min="1" max="5" required>
+    <label for="grammar">Grammar practice (hours):</label>
+    <input type="range" id="grammar" min="1" max="5" required>
+    <label for="listening">Listening practice (hours):</label>
+    <input type="range" id="listening" min="1" max="5" required>
+    <label for="fun">Fun (hours):</label>
+    <input type="range" id="fun" min="1" max="5" required>
+    <label for="other">Other (hours):</label>
+    <input type="range" id="other" min="1" max="5" required>
+    <button type="submit">Submit</button>
+  </form>
+<div id="progress-history">
+  <h2>Progress History</h2>
+</div>
+<canvas id="progress-chart" height="200"></canvas>
+
+  <div id="ideal-plan">
+  <h2>Ideal Plan</h2>
+  <p>Speaking Practice: 1 hour</p>
+  <p>Vocabulary Practice: 1 hour</p>
+  <p>Grammar Practice: 30 min</p>
+  <p>Listening Practice: 1 hour</p>
+  <p>Fun: 30 min</p>
+  <p>Other: 0</p>
+</div>
+  <script src="scripts.js"></script>
+</body>
+</html>
+
