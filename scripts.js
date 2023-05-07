@@ -56,92 +56,138 @@ async function fetchProgressHistory() {
   const snapshot = await database.ref('progress').once('value');
   const progressHistory = snapshot.val();
 
-  // Update the chart
-  updateChart(progressHistory);
+  // Split the progress history into weeks
+  const weeks = splitIntoWeeks(progressHistory);
+
+  // Update the charts
+  updateCharts(weeks);
 }
 
-function updateChart(progressHistory) {
-  // Prepare the data for the chart
-  const labels = Object.keys(progressHistory);
-  const speakingData = Object.values(progressHistory).map((progress) => progress.speakingHours);
-  const vocabularyData = Object.values(progressHistory).map((progress) => progress.vocabularyHours);
-  const grammarData = Object.values(progressHistory).map((progress) => progress.grammarHours);
-  const listeningData = Object.values(progressHistory).map((progress) => progress.listeningHours);
-  const funData = Object.values(progressHistory).map((progress) => progress.funHours);
-  const otherData = Object.values(progressHistory).map((progress) => progress.otherHours);
+function splitIntoWeeks(progressHistory) {
+  const weeks = [];
+  let currentWeek = {};
+  let weekIndex = 0;
 
-  // Create the chart
-  const ctx = document.getElementById('progress-chart').getContext('2d');
- const chart = new Chart(ctx, {
-  type: 'bar',
-  data: {
-    labels: labels,
-    datasets: [
-      {
-        label: 'Speaking Practice',
-        data: speakingData,
-        borderColor: 'rgba(75, 192, 192, 1)',
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        fill: true,
-      },
-      {
-        label: 'Vocabulary Practice',
-        data: vocabularyData,
-        borderColor: 'rgba(255, 99, 132, 1)',
-        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-        fill: true,
-      },
-      {
-        label: 'Grammar Practice',
-        data: grammarData,
-        borderColor: 'rgba(54, 162, 235, 1)',
-        backgroundColor: 'rgba(54, 162, 235, 0.2)',
-        fill: true,
-      },
-      {
-        label: 'Listening Practice',
-        data: listeningData,
-        borderColor: 'rgba(153, 102, 255, 1)',
-        backgroundColor: 'rgba(153, 102, 255, 0.2)',
-        fill: true,
-      },
-      {
-        label: 'Fun',
-        data: funData,
-        borderColor: 'rgba(255, 159, 64, 1)',
-        backgroundColor: 'rgba(255, 159, 64, 0.2)',
-        fill: true,
-      },
-      {
-        label: 'Other',
-        data: otherData,
-        borderColor: 'rgba(255, 206, 86, 1)',
-        backgroundColor: 'rgba(255, 206, 86, 0.2)',
-        fill: true,
-      },
-    ],
-  },
-options: {
-  responsive: true,
-  // maintainAspectRatio: true, // Comment or remove this line
-  // aspectRatio: 2.5, // Comment or remove this line
-  scales: {
-    y: {
-      beginAtZero: true,
-    },
-  },
-  plugins: {
-    legend: {
-      position: 'top',
-    },
-    title: {
-      display: true,
-      text: 'Arabic Learning Progress',
-    },
-    },
-  },
-});
+  for (const date in progressHistory) {
+    const currentDate = new Date(date);
+    const dayOfWeek = currentDate.getDay();
 
+    if (dayOfWeek === 0) { // Sunday
+      weekIndex++;
+    }
+
+    if (!currentWeek[weekIndex]) {
+      currentWeek[weekIndex] = {};
+    }
+
+    currentWeek[weekIndex][date] = progressHistory[date];
+  }
+
+  // Transform the currentWeek object into an array of weeks
+  for (const week in currentWeek) {
+    weeks.push(currentWeek[week]);
+  }
+
+  return weeks;
+}
+
+function updateCharts(weeks) {
+  weeks.forEach((week, index) => {
+    // Prepare the data for the chart
+    const labels = Object.keys(week);
+    const speakingData = Object.values(week).map((progress) => progress.speakingHours);
+    const vocabularyData = Object.values(week).map((progress) => progress.vocabularyHours);
+    const grammarData = Object.values(week).map((progress) => progress.grammarHours);
+    const listeningData = Object.values(week).map((progress) => progress.listeningHours);
+    const funData = Object.values(week).map((progress) => progress.funHours);
+    const otherData = Object.values(week).map((progress) => progress.otherHours);
+
+    // Create a new div element with the class "chart-container"
+    const chartContainer = document.createElement('div');
+    chartContainer.classList.add('chart-container');
+
+    // Create a new canvas element for the chart
+    const canvas = document.createElement('canvas');
+    canvas.classList.add('weekly-chart');
+    canvas.style.display = 'block';
+
+    // Append the canvas to the chart container
+    chartContainer.appendChild(canvas);
+
+    // Append the chart container to the progress history container
+    progressHistoryContainer.appendChild(chartContainer);
+
+    // Create the chart
+    const ctx = canvas.getContext('2d');
+    const chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Speaking Practice',
+            data: speakingData,
+            borderColor: 'rgba(75, 192, 192, 1)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            fill: true,
+          },
+          {
+            label: 'Vocabulary Practice',
+            data: vocabularyData,
+            borderColor: 'rgba(255, 99, 132, 1)',
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            fill: true,
+          },
+          {
+            label: 'Grammar Practice',
+            data: grammarData,
+            borderColor: 'rgba(54, 162, 235, 1)',
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            fill: true,
+          },
+          {
+            label: 'Listening Practice',
+            data: listeningData,
+            borderColor: 'rgba(153, 102, 255, 1)',
+            backgroundColor: 'rgba(153, 102, 255, 0.2)',
+            fill: true,
+          },
+          {
+            label: 'Fun',
+            data: funData,
+            borderColor: 'rgba(255, 159, 64, 1)',
+            backgroundColor: 'rgba(255, 159, 64, 0.2)',
+            fill: true,
+          },
+          {
+            label: 'Other',
+            data: otherData,
+            borderColor: 'rgba(255, 206, 86, 1)',
+            backgroundColor: 'rgba(255, 206, 86, 0.2)',
+            fill: true,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+          },
+        },
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+          title: {
+            display: true,
+            text: `Arabic Learning Progress - Week ${index + 1}`,
+          },
+        },
+      },
+    });
+  });
 }
 
 // Fetch the initial progress history
