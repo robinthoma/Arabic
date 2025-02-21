@@ -1,56 +1,413 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="styles.css">
-  <title>Arabic Learning Progress</title>
-  <!-- Firebase SDK v8 -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body>
-  <h1> تقدم تعلم اللغة العربية </h1>
-  <form id="progress-form">
-    <label for="date">Date:</label>
-    <input type="date" id="date" required>
-    <label for="speaking">Speaking practice (hours):</label>
-    <input type="range" id="speaking" min="1" max="5" required>
-    <label for="vocabulary">Vocabulary practice (hours):</label>
-    <input type="range" id="vocabulary" min="1" max="5" required>
-    <label for="grammar">Grammar practice (hours):</label>
-    <input type="range" id="grammar" min="1" max="5" required>
-    <label for="listening">Listening practice (hours):</label>
-    <input type="range" id="listening" min="1" max="5" required>
-    <label for="fun">Fun (hours):</label>
-    <input type="range" id="fun" min="1" max="5" required>
-    <label for="other">Other (hours):</label>
-    <input type="range" id="other" min="1" max="5" required>
-    <button type="submit">Submit</button>
-  </form>
-<div id="progress-history">
-  <h2>Progress History</h2>
-</div>
-<canvas id="progress-chart" height="200"></canvas>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Arabic Progress Tracker</title>
+  
+  <!-- Bootstrap CSS -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    integrity="sha384-ENjdO4Dr2bkBIFxQpe3Fu0vKMynC7rQ6r64dOxKJz9M8MMQCXK3VBV0v42PPJo12"
+    crossorigin="anonymous"
+  />
 
-  <div id="ideal-plan">
-  <h2>Ideal Plan</h2>
-  <p>Speaking Practice: 1 hour</p>
-  <p>Vocabulary Practice: 1 hour</p>
-  <p>Grammar Practice: 30 min</p>
-  <p>Listening Practice: 1 hour</p>
-  <p>Fun: 30 min</p>
-  <p>Other: 0</p>
-</div>
-<style>
-  .chart-container {
-    width: 800px; /* Adjust this value based on your desired chart size */
-    height: 400px; /* Adjust this value based on your desired chart size */
-  }
-</style>
-  <script src="scripts.js"></script>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    /* Body with a soft gradient background */
+    body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      font-family: "Nunito", sans-serif;
+    }
+
+    /* Navbar brand styling */
+    .navbar-brand {
+      font-weight: bold;
+    }
+
+    /* Hero section */
+    .hero {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: #343a40;
+    }
+    .hero-title {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+    .hero-subtitle {
+      font-size: 1.1rem;
+      color: #6c757d;
+    }
+
+    /* Card styling */
+    .card {
+      border-radius: 10px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+    }
+
+    /* Chart container */
+    .chart-container {
+      min-height: 400px;
+    }
+
+    /* Toast container in the top-right corner */
+    .toast-container {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 9999;
+    }
+
+    /* Custom styling for range sliders */
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 5px;
+      background: #d3d3d3;
+      outline: none;
+      margin: 5px 0 15px;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #0d6efd; /* Bootstrap primary color */
+      cursor: pointer;
+      box-shadow: 0 0 2px rgba(0,0,0,0.2);
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #0d6efd;
+      cursor: pointer;
+      box-shadow: 0 0 2px rgba(0,0,0,0.2);
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+      <a class="navbar-brand" href="#">
+        Arabic Progress Tracker
+      </a>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <div class="hero">
+    <h1 class="hero-title">Track Your Arabic Study</h1>
+    <p class="hero-subtitle">Save your daily activities and see your progress for the last 30 days</p>
+  </div>
+
+  <!-- Main container -->
+  <div class="container pb-5">
+    <div class="row g-4">
+      <!-- Left column: Form -->
+      <div class="col-lg-6">
+        <div class="card">
+          <div class="card-body">
+            <h4 class="card-title mb-3 text-center">Daily Entry</h4>
+            <form id="progress-form">
+              <div class="mb-3">
+                <label for="date" class="form-label">Date</label>
+                <input type="date" id="date" class="form-control" required />
+              </div>
+              <div class="mb-3">
+                <label for="speaking" class="form-label">Speaking (hrs)</label>
+                <input type="range" id="speaking" min="0" max="5" step="1" class="form-range" required />
+              </div>
+              <div class="mb-3">
+                <label for="vocabulary" class="form-label">Vocabulary (hrs)</label>
+                <input type="range" id="vocabulary" min="0" max="5" step="1" class="form-range" required />
+              </div>
+              <div class="mb-3">
+                <label for="grammar" class="form-label">Grammar (hrs)</label>
+                <input type="range" id="grammar" min="0" max="5" step="1" class="form-range" required />
+              </div>
+              <div class="mb-3">
+                <label for="listening" class="form-label">Listening (hrs)</label>
+                <input type="range" id="listening" min="0" max="5" step="1" class="form-range" required />
+              </div>
+              <div class="mb-3">
+                <label for="fun" class="form-label">Fun (hrs)</label>
+                <input type="range" id="fun" min="0" max="5" step="1" class="form-range" required />
+              </div>
+              <div class="mb-3">
+                <label for="other" class="form-label">Other (hrs)</label>
+                <input type="range" id="other" min="0" max="5" step="1" class="form-range" required />
+              </div>
+              <button type="submit" class="btn btn-primary w-100">Save</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right column: Ideal Plan -->
+      <div class="col-lg-6">
+        <div class="card">
+          <div class="card-body">
+            <h4 class="card-title mb-3 text-center">Ideal Daily Plan</h4>
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item">Speaking: 1 hour</li>
+              <li class="list-group-item">Vocabulary: 1 hour</li>
+              <li class="list-group-item">Grammar: 30 minutes</li>
+              <li class="list-group-item">Listening: 1 hour</li>
+              <li class="list-group-item">Fun: 30 minutes</li>
+              <li class="list-group-item">Other: 0</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Historical Chart (Last 30 Days) -->
+    <div class="card mt-4">
+      <div class="card-body">
+        <h4 class="card-title text-center mb-4">Progress Over the Last 30 Days</h4>
+        <div class="chart-container">
+          <canvas id="historicalChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast for Success -->
+  <div class="toast-container">
+    <div
+      id="saveToast"
+      class="toast align-items-center text-white bg-success border-0"
+      role="alert"
+      aria-live="assertive"
+      aria-atomic="true"
+    >
+      <div class="d-flex">
+        <div class="toast-body">
+          Your progress was saved successfully!
+        </div>
+        <button
+          type="button"
+          class="btn-close btn-close-white me-2 m-auto"
+          data-bs-dismiss="toast"
+          aria-label="Close"
+        ></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+05m6O3E0GpGFl7eZJa8MBDjhkP9k"
+    crossorigin="anonymous">
+  </script>
+
+  <script>
+    // ========== Firebase Initialization ==========
+    const firebaseConfig = {
+      apiKey: "AIzaSyAJtgXriTZqRdFipz4NgU2gD286C4pi3-w",
+      authDomain: "arabic-progress.firebaseapp.com",
+      projectId: "arabic-progress",
+      storageBucket: "arabic-progress.appspot.com",
+      messagingSenderId: "563086644784",
+      appId: "1:563086644784:web:98d906f696ab465d41bff5",
+      measurementId: "G-8EEBBX4N63"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    // DOM Elements
+    const form = document.getElementById("progress-form");
+    const dateInput = document.getElementById("date");
+    const speakingInput = document.getElementById("speaking");
+    const vocabularyInput = document.getElementById("vocabulary");
+    const grammarInput = document.getElementById("grammar");
+    const listeningInput = document.getElementById("listening");
+    const funInput = document.getElementById("fun");
+    const otherInput = document.getElementById("other");
+    const historicalChartCanvas = document.getElementById("historicalChart");
+    const saveToastEl = document.getElementById("saveToast");
+
+    let historicalChart; // Will hold the line chart instance
+
+    // ========== Form Submission ==========
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const date = dateInput.value;
+      if (!date) return;
+
+      const speakingHours = parseInt(speakingInput.value, 10);
+      const vocabularyHours = parseInt(vocabularyInput.value, 10);
+      const grammarHours = parseInt(grammarInput.value, 10);
+      const listeningHours = parseInt(listeningInput.value, 10);
+      const funHours = parseInt(funInput.value, 10);
+      const otherHours = parseInt(otherInput.value, 10);
+
+      // Save to Firebase
+      await database.ref("progress/" + date).set({
+        speakingHours,
+        vocabularyHours,
+        grammarHours,
+        listeningHours,
+        funHours,
+        otherHours
+      });
+
+      // Reset form
+      form.reset();
+
+      // Show success toast
+      const toastBootstrap = new bootstrap.Toast(saveToastEl);
+      toastBootstrap.show();
+
+      // Refresh chart
+      fetchAndRenderLast30Days();
+    });
+
+    // ========== Fetch & Show Last 30 Days ==========
+    async function fetchAndRenderLast30Days() {
+      // Get data
+      const snapshot = await database.ref("progress").once("value");
+      const progressData = snapshot.val() || {};
+
+      // Build an array of the last 30 days (ascending)
+      const last30Dates = getLast30Dates(); 
+
+      // Prepare arrays
+      const speakingArr = [];
+      const vocabArr = [];
+      const grammarArr = [];
+      const listeningArr = [];
+      const funArr = [];
+      const otherArr = [];
+
+      // For each day in the last 30 days, default to 0 if no entry in DB
+      last30Dates.forEach((dateStr) => {
+        const entry = progressData[dateStr] || {
+          speakingHours: 0,
+          vocabularyHours: 0,
+          grammarHours: 0,
+          listeningHours: 0,
+          funHours: 0,
+          otherHours: 0,
+        };
+        speakingArr.push(entry.speakingHours);
+        vocabArr.push(entry.vocabularyHours);
+        grammarArr.push(entry.grammarHours);
+        listeningArr.push(entry.listeningHours);
+        funArr.push(entry.funHours);
+        otherArr.push(entry.otherHours);
+      });
+
+      // Destroy existing chart if present
+      if (historicalChart) {
+        historicalChart.destroy();
+      }
+
+      // Create line chart
+      historicalChart = new Chart(historicalChartCanvas.getContext("2d"), {
+        type: "line",
+        data: {
+          labels: last30Dates,
+          datasets: [
+            {
+              label: "Speaking",
+              data: speakingArr,
+              borderColor: "rgba(75, 192, 192, 1)",
+              backgroundColor: "rgba(75, 192, 192, 0.2)",
+              fill: true,
+              tension: 0.2
+            },
+            {
+              label: "Vocabulary",
+              data: vocabArr,
+              borderColor: "rgba(255, 99, 132, 1)",
+              backgroundColor: "rgba(255, 99, 132, 0.2)",
+              fill: true,
+              tension: 0.2
+            },
+            {
+              label: "Grammar",
+              data: grammarArr,
+              borderColor: "rgba(54, 162, 235, 1)",
+              backgroundColor: "rgba(54, 162, 235, 0.2)",
+              fill: true,
+              tension: 0.2
+            },
+            {
+              label: "Listening",
+              data: listeningArr,
+              borderColor: "rgba(153, 102, 255, 1)",
+              backgroundColor: "rgba(153, 102, 255, 0.2)",
+              fill: true,
+              tension: 0.2
+            },
+            {
+              label: "Fun",
+              data: funArr,
+              borderColor: "rgba(255, 159, 64, 1)",
+              backgroundColor: "rgba(255, 159, 64, 0.2)",
+              fill: true,
+              tension: 0.2
+            },
+            {
+              label: "Other",
+              data: otherArr,
+              borderColor: "rgba(255, 206, 86, 1)",
+              backgroundColor: "rgba(255, 206, 86, 0.2)",
+              fill: true,
+              tension: 0.2
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { beginAtZero: true }
+          },
+          plugins: {
+            legend: { position: "top" }
+          }
+        }
+      });
+    }
+
+    // Returns an array of date strings for the last 30 days (YYYY-MM-DD), ascending
+    function getLast30Dates() {
+      const dates = [];
+      const today = new Date();
+
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        dates.push(`${year}-${month}-${day}`);
+      }
+      return dates;
+    }
+
+    // Initialize chart on page load
+    window.onload = fetchAndRenderLast30Days;
+  </script>
 </body>
 </html>
-
